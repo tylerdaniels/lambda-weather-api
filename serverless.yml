@@ -2,18 +2,22 @@ service: lambda-weather-api
 
 plugins:
   - serverless-offline
+  - serverless-dotenv-plugin # With the plugin enabled, all variables in .env are automatically imported
 
 provider:
   name: aws
-  runtime: nodejs14.x
+  runtime: nodejs20.x
 
 functions:
-  main:
-    handler: dist/main.handler
+  current:
+    handler: dist/main.current
     events:
       - http:
-          method: ANY
-          path: /
+          method: GET
+          path: /weather/{city}
+  historical:
+    handler: dist/main.historical
+    events:
       - http:
-          method: ANY
-          path: '{proxy+}'
+          method: GET
+          path: /weather/history/{city}

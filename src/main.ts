@@ -1,25 +1,52 @@
+import type {
+  APIGatewayProxyEvent,
+  APIGatewayProxyHandler,
+  APIGatewayProxyResult,
+  Callback,
+  Context,
+} from 'aws-lambda';
+import type { HandlerProvider } from './types/handler.provider';
 import { NestFactory } from '@nestjs/core';
-import { APIGatewayProxyHandlerV2, APIGatewayProxyResultV2 } from 'aws-lambda';
+import { HttpStatus } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { AppService } from './app.service';
+import { HANDLER_PROVIDER } from './types';
 
-let service: AppService;
+let handlers: HandlerProvider; // Handler cache for warm starts
 
-async function bootstrap(): Promise<AppService> {
+async function bootstrap(): Promise<HandlerProvider> {
   const app = await NestFactory.createApplicationContext(AppModule);
-  await app.init();
-
-  return app.get(AppService);
+  handlers = app.get(HANDLER_PROVIDER);
+  return handlers;
 }
 
-export const handler: APIGatewayProxyHandlerV2 =
-  async () // event: APIGatewayProxyEventV2,
-  // context: Context,
-  // callback: Callback<APIGatewayProxyResultV2>,
-  : Promise<APIGatewayProxyResultV2> => {
-    const appService = service ?? (await bootstrap());
+export const current: APIGatewayProxyHandler = async (
+  event: APIGatewayProxyEvent,
+  context: Context,
+  callback: Callback<APIGatewayProxyResult>,
+): Promise<APIGatewayProxyResult> => {
+  const handlerProvider = handlers ?? (await bootstrap());
+  const result = await handlerProvider.current(event, context, callback);
+  if (result === undefined) {
     return {
-      statusCode: 200,
-      body: appService.getHello(),
+      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      body: 'Current weather handler failed to return a value',
     };
-  };
+  }
+  return result;
+};
+
+export const historical: APIGatewayProxyHandler = async (
+  event: APIGatewayProxyEvent,
+  context: Context,
+  callback: Callback<APIGatewayProxyResult>,
+): Promise<APIGatewayProxyResult> => {
+  const handlerProvider = handlers ?? (await bootstrap());
+  const result = await handlerProvider.historical(event, context, callback);
+  if (result === undefined) {
+    return {
+      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      body: 'Historical weather handler failed to return a value',
+    };
+  }
+  return result;
+};
