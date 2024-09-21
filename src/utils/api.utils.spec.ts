@@ -1,20 +1,20 @@
 import {
-  APIGatewayProxyEvent,
   APIGatewayProxyEventPathParameters,
   APIGatewayProxyEventQueryStringParameters,
+  APIGatewayProxyEventV2,
   Callback,
   Context,
 } from 'aws-lambda';
 import { extractCityFromPath } from './api.utils';
 
 export function event(
-  pathParameters: APIGatewayProxyEventPathParameters,
-  queryStringParameters: APIGatewayProxyEventQueryStringParameters,
-): APIGatewayProxyEvent {
+  pathParameters?: APIGatewayProxyEventPathParameters,
+  queryStringParameters?: APIGatewayProxyEventQueryStringParameters,
+): APIGatewayProxyEventV2 {
   return {
     pathParameters,
     queryStringParameters,
-  } as APIGatewayProxyEvent;
+  } as APIGatewayProxyEventV2;
 }
 
 export function context(): Context {

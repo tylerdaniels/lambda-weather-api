@@ -1,6 +1,6 @@
-import { APIGatewayProxyHandler } from 'aws-lambda';
+import { APIGatewayProxyHandlerV2 } from 'aws-lambda';
 
 export interface HandlerProvider {
-  readonly current: APIGatewayProxyHandler;
-  readonly historical: APIGatewayProxyHandler;
+  readonly current: APIGatewayProxyHandlerV2;
+  readonly historical: APIGatewayProxyHandlerV2;
 }

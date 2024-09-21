@@ -11,6 +11,7 @@ import {
 import { extractCoordinates } from './utils';
 import { context, disallowedCallback, event } from './utils/api.utils.spec';
 import { LambdaHandlerProvider } from './lambda-handler.provider';
+import { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 
 @Injectable()
 class MockGeocoder implements GeocodeService {
@@ -76,9 +77,10 @@ describe('LambdaHandlerProvider', () => {
         disallowedCallback(),
       );
       expect(result).toBeDefined();
-      expect(result!.statusCode).toBe(HttpStatus.BAD_REQUEST);
+      const structured = result as APIGatewayProxyStructuredResultV2;
+      expect(structured.statusCode).toBe(HttpStatus.BAD_REQUEST);
       // Error message should contain something about the missing parameter
-      expect(result!.body).toContain('city');
+      expect(structured.body).toContain('city');
     });
     it('should fail with geocoder error without status code', async () => {
       const error = new Error('forced error');
@@ -91,8 +93,9 @@ describe('LambdaHandlerProvider', () => {
       );
       expect(geocodeService.lastLocation).toBe(city);
       expect(result).toBeDefined();
-      expect(result!.statusCode).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
-      expect(result!.body).toBe(error.message);
+      const structured = result as APIGatewayProxyStructuredResultV2;
+      expect(structured.statusCode).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
+      expect(structured.body).toBe(error.message);
     });
     it('should fail with geocoder error with status code', async () => {
       const error = new HttpException('forced error', HttpStatus.UNAUTHORIZED);
@@ -105,8 +108,9 @@ describe('LambdaHandlerProvider', () => {
       );
       expect(geocodeService.lastLocation).toBe(city);
       expect(result).toBeDefined();
-      expect(result!.statusCode).toBe(error.getStatus());
-      expect(result!.body).toBe(error.message);
+      const structured = result as APIGatewayProxyStructuredResultV2;
+      expect(structured.statusCode).toBe(error.getStatus());
+      expect(structured.body).toBe(error.message);
     });
     it('should fail with weather error without status code', async () => {
       const error = new Error('forced error');
@@ -121,8 +125,9 @@ describe('LambdaHandlerProvider', () => {
       expect(geocodeService.lastLocation).toBe(city);
       expect(weatherService.lastCoords).toBe(geocodeService.expectedCoords);
       expect(result).toBeDefined();
-      expect(result!.statusCode).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
-      expect(result!.body).toBe(error.message);
+      const structured = result as APIGatewayProxyStructuredResultV2;
+      expect(structured.statusCode).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
+      expect(structured.body).toBe(error.message);
     });
     it('should fail with weather error with status code', async () => {
       const error = new HttpException('forced error', HttpStatus.UNAUTHORIZED);
@@ -137,8 +142,9 @@ describe('LambdaHandlerProvider', () => {
       expect(geocodeService.lastLocation).toBe(city);
       expect(weatherService.lastCoords).toBe(geocodeService.expectedCoords);
       expect(result).toBeDefined();
-      expect(result!.statusCode).toBe(error.getStatus());
-      expect(result!.body).toBe(error.message);
+      const structured = result as APIGatewayProxyStructuredResultV2;
+      expect(structured.statusCode).toBe(error.getStatus());
+      expect(structured.body).toBe(error.message);
     });
     it('should return current weather', async () => {
       const weather = { temperature: 15 } as CurrentWeather;
@@ -153,9 +159,10 @@ describe('LambdaHandlerProvider', () => {
       expect(geocodeService.lastLocation).toBe(city);
       expect(weatherService.lastCoords).toBe(geocodeService.expectedCoords);
       expect(result).toBeDefined();
-      expect(result!.statusCode).toBe(HttpStatus.OK);
-      expect(result!.body).toBeDefined();
-      const parsedWeather = JSON.parse(result!.body);
+      const structured = result as APIGatewayProxyStructuredResultV2;
+      expect(structured.statusCode).toBe(HttpStatus.OK);
+      expect(structured.body).toBeDefined();
+      const parsedWeather = JSON.parse(structured.body!);
       expect(parsedWeather).toEqual(weather);
     });
   });

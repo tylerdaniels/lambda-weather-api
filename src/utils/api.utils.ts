@@ -1,7 +1,7 @@
-import { APIGatewayProxyEvent } from 'aws-lambda';
+import { APIGatewayProxyEventV2 } from 'aws-lambda';
 
 export function extractCityFromPath(
-  event: APIGatewayProxyEvent,
+  event: APIGatewayProxyEventV2,
 ): string | undefined {
   if (!event.pathParameters || !('city' in event.pathParameters)) {
     return undefined;

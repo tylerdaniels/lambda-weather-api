@@ -1,8 +1,8 @@
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import {
-  APIGatewayProxyEvent,
-  APIGatewayProxyHandler,
-  APIGatewayProxyResult,
+  APIGatewayProxyEventV2,
+  APIGatewayProxyHandlerV2,
+  APIGatewayProxyResultV2,
 } from 'aws-lambda';
 import {
   GEOCODE_SERVICE,
@@ -20,9 +20,9 @@ export class LambdaHandlerProvider implements HandlerProvider {
     @Inject(WEATHER_SERVICE) private readonly weatherService: WeatherService,
   ) {}
 
-  readonly current: APIGatewayProxyHandler = async (
-    event: APIGatewayProxyEvent,
-  ): Promise<APIGatewayProxyResult> => {
+  readonly current: APIGatewayProxyHandlerV2 = async (
+    event: APIGatewayProxyEventV2,
+  ): Promise<APIGatewayProxyResultV2> => {
     // Validate path before bootstrapping to save time
     const city = extractCityFromPath(event);
     if (!city) {
@@ -54,8 +54,8 @@ export class LambdaHandlerProvider implements HandlerProvider {
     }
   };
 
-  readonly historical: APIGatewayProxyHandler =
-    async (): Promise<APIGatewayProxyResult> => {
+  readonly historical: APIGatewayProxyHandlerV2 =
+    async (): Promise<APIGatewayProxyResultV2> => {
       return {
         statusCode: HttpStatus.NOT_FOUND,
         body: 'Historical weather not implemented',

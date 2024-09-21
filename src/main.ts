@@ -1,7 +1,7 @@
 import type {
-  APIGatewayProxyEvent,
-  APIGatewayProxyHandler,
-  APIGatewayProxyResult,
+  APIGatewayProxyEventV2,
+  APIGatewayProxyHandlerV2,
+  APIGatewayProxyResultV2,
   Callback,
   Context,
 } from 'aws-lambda';
@@ -19,11 +19,11 @@ async function bootstrap(): Promise<HandlerProvider> {
   return handlers;
 }
 
-export const current: APIGatewayProxyHandler = async (
-  event: APIGatewayProxyEvent,
+export const current: APIGatewayProxyHandlerV2 = async (
+  event: APIGatewayProxyEventV2,
   context: Context,
-  callback: Callback<APIGatewayProxyResult>,
-): Promise<APIGatewayProxyResult> => {
+  callback: Callback<APIGatewayProxyResultV2>,
+): Promise<APIGatewayProxyResultV2> => {
   const handlerProvider = handlers ?? (await bootstrap());
   const result = await handlerProvider.current(event, context, callback);
   if (result === undefined) {
@@ -35,11 +35,11 @@ export const current: APIGatewayProxyHandler = async (
   return result;
 };
 
-export const historical: APIGatewayProxyHandler = async (
-  event: APIGatewayProxyEvent,
+export const historical: APIGatewayProxyHandlerV2 = async (
+  event: APIGatewayProxyEventV2,
   context: Context,
-  callback: Callback<APIGatewayProxyResult>,
-): Promise<APIGatewayProxyResult> => {
+  callback: Callback<APIGatewayProxyResultV2>,
+): Promise<APIGatewayProxyResultV2> => {
   const handlerProvider = handlers ?? (await bootstrap());
   const result = await handlerProvider.historical(event, context, callback);
   if (result === undefined) {
