@@ -6,12 +6,17 @@ import {
   GEOCODE_SERVICE,
   GeocodeCoordinates,
   GeocodeService,
+  HistoricalWeather,
   WEATHER_SERVICE,
   WeatherService,
 } from './types';
 import { extractCoordinates } from './utils';
 import { WeatherHandlerProvider } from './weather-handler.provider';
-import { context, disallowedCallback, event } from '../test/utils/api-testing';
+import {
+  context,
+  disallowedCallback,
+  event,
+} from '../test/utils/lambda-testing';
 
 @Injectable()
 class MockGeocoder implements GeocodeService {
@@ -30,9 +35,9 @@ class MockGeocoder implements GeocodeService {
 
 @Injectable()
 class MockWeatherService implements WeatherService {
-  lastCoords: GeocodeCoordinates | undefined;
-  expectedError: Error | undefined;
-  expectedWeather: CurrentWeather | undefined;
+  lastCurrentCoords: GeocodeCoordinates | undefined;
+  expectedCurrentError: Error | undefined;
+  expectedCurrentWeather: CurrentWeather | undefined;
 
   current(coordinates: GeocodeCoordinates): Promise<CurrentWeather>;
   current(latitude: number, longitude: number): Promise<CurrentWeather>;
@@ -41,11 +46,29 @@ class MockWeatherService implements WeatherService {
     longitude?: number,
   ): Promise<CurrentWeather> {
     const coords = extractCoordinates(latitude, longitude);
-    this.lastCoords = coords;
-    if (this.expectedWeather) {
-      return Promise.resolve(this.expectedWeather);
+    this.lastCurrentCoords = coords;
+    if (this.expectedCurrentWeather) {
+      return Promise.resolve(this.expectedCurrentWeather);
     }
-    return Promise.reject(this.expectedError);
+    return Promise.reject(this.expectedCurrentError);
+  }
+
+  lastHistoricalCoords: GeocodeCoordinates | undefined;
+  expectedHistoricalError: Error | undefined;
+  expectedHistoricalWeather: HistoricalWeather | undefined;
+
+  historical(coordinates: GeocodeCoordinates): Promise<HistoricalWeather>;
+  historical(latitude: number, longitude: number): Promise<HistoricalWeather>;
+  historical(
+    latitude: GeocodeCoordinates | number,
+    longitude?: number,
+  ): Promise<HistoricalWeather> {
+    const coords = extractCoordinates(latitude, longitude);
+    this.lastHistoricalCoords = coords;
+    if (this.expectedHistoricalWeather) {
+      return Promise.resolve(this.expectedHistoricalWeather);
+    }
+    return Promise.reject(this.expectedHistoricalError);
   }
 }
 
@@ -116,14 +139,16 @@ describe('WeatherHandlerProvider', () => {
       const error = new Error('forced error');
       const city = 'New York';
       geocodeService.expectedCoords = { name: city, lat: 0, long: 0 };
-      weatherService.expectedError = error;
+      weatherService.expectedCurrentError = error;
       const result = await handlerProvider.current(
         event({ city }, {}),
         context(),
         disallowedCallback(),
       );
       expect(geocodeService.lastLocation).toBe(city);
-      expect(weatherService.lastCoords).toBe(geocodeService.expectedCoords);
+      expect(weatherService.lastCurrentCoords).toBe(
+        geocodeService.expectedCoords,
+      );
       expect(result).toBeDefined();
       const structured = result as APIGatewayProxyStructuredResultV2;
       expect(structured.statusCode).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -133,14 +158,16 @@ describe('WeatherHandlerProvider', () => {
       const error = new HttpException('forced error', HttpStatus.UNAUTHORIZED);
       const city = 'New York';
       geocodeService.expectedCoords = { name: city, lat: 0, long: 0 };
-      weatherService.expectedError = error;
+      weatherService.expectedCurrentError = error;
       const result = await handlerProvider.current(
         event({ city }, {}),
         context(),
         disallowedCallback(),
       );
       expect(geocodeService.lastLocation).toBe(city);
-      expect(weatherService.lastCoords).toBe(geocodeService.expectedCoords);
+      expect(weatherService.lastCurrentCoords).toBe(
+        geocodeService.expectedCoords,
+      );
       expect(result).toBeDefined();
       const structured = result as APIGatewayProxyStructuredResultV2;
       expect(structured.statusCode).toBe(error.getStatus());
@@ -150,14 +177,16 @@ describe('WeatherHandlerProvider', () => {
       const weather = { temperature: 15 } as CurrentWeather;
       const city = 'New York';
       geocodeService.expectedCoords = { name: city, lat: 0, long: 0 };
-      weatherService.expectedWeather = weather;
+      weatherService.expectedCurrentWeather = weather;
       const result = await handlerProvider.current(
         event({ city }, {}),
         context(),
         disallowedCallback(),
       );
       expect(geocodeService.lastLocation).toBe(city);
-      expect(weatherService.lastCoords).toBe(geocodeService.expectedCoords);
+      expect(weatherService.lastCurrentCoords).toBe(
+        geocodeService.expectedCoords,
+      );
       expect(result).toBeDefined();
       const structured = result as APIGatewayProxyStructuredResultV2;
       expect(structured.statusCode).toBe(HttpStatus.OK);

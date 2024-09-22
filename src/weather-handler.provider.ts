@@ -54,11 +54,37 @@ export class WeatherHandlerProvider implements HandlerProvider {
     }
   };
 
-  readonly historical: APIGatewayProxyHandlerV2 =
-    async (): Promise<APIGatewayProxyResultV2> => {
+  readonly historical: APIGatewayProxyHandlerV2 = async (
+    event: APIGatewayProxyEventV2,
+  ): Promise<APIGatewayProxyResultV2> => {
+    // Validate path before bootstrapping to save time
+    const city = extractCityFromPath(event);
+    if (!city) {
       return {
-        statusCode: HttpStatus.NOT_FOUND,
-        body: 'Historical weather not implemented',
+        statusCode: HttpStatus.BAD_REQUEST,
+        body: 'Historical weather requires a "city" to be provided',
       };
-    };
+    }
+    try {
+      const location = await this.geocodeService.geocode(city);
+      const weather = await this.weatherService.historical(location);
+      return {
+        statusCode: HttpStatus.OK,
+        body: JSON.stringify(weather),
+      };
+    } catch (e: unknown) {
+      const statusCode =
+        e instanceof HttpException
+          ? e.getStatus()
+          : HttpStatus.INTERNAL_SERVER_ERROR;
+      const body =
+        e instanceof Error
+          ? e.message
+          : `Unable to fetch historical weather: ${e}`;
+      return {
+        statusCode,
+        body,
+      };
+    }
+  };
 }

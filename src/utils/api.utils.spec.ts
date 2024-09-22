@@ -1,5 +1,5 @@
 import { extractCityFromPath } from './api.utils';
-import { event } from '../../test/utils/api-testing';
+import { event } from '../../test/utils/lambda-testing';
 
 describe('extractCityFromPath', () => {
   it('should fail without a "city" parameter', () => {

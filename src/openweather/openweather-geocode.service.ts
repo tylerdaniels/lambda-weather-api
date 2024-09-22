@@ -1,4 +1,10 @@
-import { Inject, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  Optional,
+} from '@nestjs/common';
 import { GeocodeCoordinates, GeocodeService } from 'src/types';
 import { OPENWEATHERMAP_APIKEY } from './openweather.constants';
 
@@ -18,7 +24,15 @@ function hasLength(s: string): boolean {
 
 @Injectable()
 export class GeocodeApi implements GeocodeService {
-  constructor(@Inject(OPENWEATHERMAP_APIKEY) private readonly apiKey: string) {}
+  private readonly fetchFn: typeof fetch;
+
+  constructor(
+    @Inject(OPENWEATHERMAP_APIKEY) private readonly apiKey: string,
+    // Used to inject mocked fetch for testing
+    @Optional() fetchFn?: typeof fetch,
+  ) {
+    this.fetchFn = fetchFn ?? global.fetch;
+  }
 
   async geocode(city: string): Promise<GeocodeCoordinates> {
     const params = new URLSearchParams({
@@ -26,7 +40,7 @@ export class GeocodeApi implements GeocodeService {
       limit: '1',
       appid: this.apiKey,
     });
-    const response = await fetch(
+    const response = await this.fetchFn(
       `http://api.openweathermap.org/geo/1.0/direct?${params.toString()}`,
     );
     if (response.status !== 200) {
@@ -34,7 +48,10 @@ export class GeocodeApi implements GeocodeService {
     }
     const cities: GeocodeResponse = await response.json();
     if (cities.length === 0) {
-      throw new Error(`No cities found for request: ${city}`);
+      throw new HttpException(
+        `No cities found for request: ${city}`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
     const geocoded = cities[0];
     const name = [geocoded.name, geocoded.state, geocoded.country]
