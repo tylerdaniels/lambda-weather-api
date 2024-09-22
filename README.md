@@ -31,6 +31,20 @@ $ npm run start
 $ npm run start:prod
 ```
 
+If DynamoDB integration is enabled using `DYNAMODB_ENABLED=1` then you'll also need to run the local DynamoDB proxy:
+
+```bash
+$ npx sls dynamodb start
+```
+
+This will use Java to run a minimal version of DynamoDB in-memory with the correct tables set-up for these additional variables:
+
+```bash
+$ export DYNAMODB_REGION=localhost
+$ export DYNAMODB_ENDPOINT="http://localhost:8096"
+$ export DYNAMODB_TABLE="weather-api-requests"
+```
+
 ## Deploy to AWS
 
 Initialise and download the required terraform providers:

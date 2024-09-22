@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import {
   CurrentWeather,
   GEOCODE_SERVICE,
@@ -9,9 +10,8 @@ import {
   WeatherService,
 } from './types';
 import { extractCoordinates } from './utils';
-import { context, disallowedCallback, event } from './utils/api.utils.spec';
-import { LambdaHandlerProvider } from './lambda-handler.provider';
-import { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
+import { WeatherHandlerProvider } from './weather-handler.provider';
+import { context, disallowedCallback, event } from '../test/utils/api-testing';
 
 @Injectable()
 class MockGeocoder implements GeocodeService {
@@ -49,10 +49,10 @@ class MockWeatherService implements WeatherService {
   }
 }
 
-describe('LambdaHandlerProvider', () => {
+describe('WeatherHandlerProvider', () => {
   let geocodeService: MockGeocoder;
   let weatherService: MockWeatherService;
-  let handlerProvider: LambdaHandlerProvider;
+  let handlerProvider: WeatherHandlerProvider;
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
@@ -61,12 +61,12 @@ describe('LambdaHandlerProvider', () => {
         { provide: GEOCODE_SERVICE, useExisting: MockGeocoder },
         MockWeatherService,
         { provide: WEATHER_SERVICE, useExisting: MockWeatherService },
-        LambdaHandlerProvider,
+        WeatherHandlerProvider,
       ],
     }).compile();
     geocodeService = app.get(MockGeocoder);
     weatherService = app.get(MockWeatherService);
-    handlerProvider = app.get(LambdaHandlerProvider);
+    handlerProvider = app.get(WeatherHandlerProvider);
   });
 
   describe('current', () => {

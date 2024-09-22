@@ -8,5 +8,5 @@ variable "aws_region" {
 variable "openweathermap_apikey" {
   description = "API Key to use for Open Weathermap API requests."
 
-  type    = string
+  type = string
 }

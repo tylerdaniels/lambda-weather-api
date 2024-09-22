@@ -14,7 +14,7 @@ import {
 import { extractCityFromPath } from './utils';
 
 @Injectable()
-export class LambdaHandlerProvider implements HandlerProvider {
+export class WeatherHandlerProvider implements HandlerProvider {
   constructor(
     @Inject(GEOCODE_SERVICE) private readonly geocodeService: GeocodeService,
     @Inject(WEATHER_SERVICE) private readonly weatherService: WeatherService,
@@ -35,7 +35,7 @@ export class LambdaHandlerProvider implements HandlerProvider {
       const location = await this.geocodeService.geocode(city);
       const weather = await this.weatherService.current(location);
       return {
-        statusCode: 200,
+        statusCode: HttpStatus.OK,
         body: JSON.stringify(weather),
       };
     } catch (e: unknown) {

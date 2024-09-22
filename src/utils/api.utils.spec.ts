@@ -1,31 +1,5 @@
-import {
-  APIGatewayProxyEventPathParameters,
-  APIGatewayProxyEventQueryStringParameters,
-  APIGatewayProxyEventV2,
-  Callback,
-  Context,
-} from 'aws-lambda';
 import { extractCityFromPath } from './api.utils';
-
-export function event(
-  pathParameters?: APIGatewayProxyEventPathParameters,
-  queryStringParameters?: APIGatewayProxyEventQueryStringParameters,
-): APIGatewayProxyEventV2 {
-  return {
-    pathParameters,
-    queryStringParameters,
-  } as APIGatewayProxyEventV2;
-}
-
-export function context(): Context {
-  return {} as Context;
-}
-
-export function disallowedCallback(): Callback<any> {
-  return () => {
-    throw new Error('Callback invocation is not allowed');
-  };
-}
+import { event } from '../../test/utils/api-testing';
 
 describe('extractCityFromPath', () => {
   it('should fail without a "city" parameter', () => {

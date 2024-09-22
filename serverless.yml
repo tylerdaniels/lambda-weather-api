@@ -1,8 +1,9 @@
 service: lambda-weather-api
 
 plugins:
-  - serverless-offline
   - serverless-dotenv-plugin # With the plugin enabled, all variables in .env are automatically imported
+  - serverless-dynamodb
+  - serverless-offline
 
 provider:
   name: aws
@@ -21,3 +22,36 @@ functions:
       - http:
           method: GET
           path: /weather/history/{city}
+
+custom:
+  serverless-dynamodb:
+    stages:
+      - dev
+    start:
+      port: 8096
+      inMemory: true
+      heapInitial: 200m
+      heapMax: 1g
+      migrate: true
+      seed: true
+      convertEmptyValues: true
+
+resources:
+  Resources:
+    usersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: weather-api-requests
+        AttributeDefinitions:
+          - AttributeName: requestId
+            AttributeType: S
+          - AttributeName: date
+            AttributeType: N
+        KeySchema:
+          - AttributeName: requestId
+            KeyType: HASH
+          - AttributeName: date
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1

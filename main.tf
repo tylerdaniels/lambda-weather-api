@@ -63,6 +63,27 @@ resource "aws_s3_object" "lambda_weather_api" {
   etag = filemd5(data.archive_file.lambda_weather_api.output_path)
 }
 
+// Provision DynamoDB tables
+resource "random_pet" "dynamodo_table_name" {
+  prefix = "weather-api-requests"
+  length = 2
+}
+
+resource "aws_dynamodb_table" "api_request_table" {
+  name         = random_pet.dynamodo_table_name.id
+  billing_mode = "PAY_PER_REQUEST"
+  attribute {
+    name = "requestId"
+    type = "S"
+  }
+  attribute {
+    name = "date"
+    type = "N"
+  }
+  hash_key  = "requestId"
+  range_key = "date"
+}
+
 // Deploy Lambda Functions
 resource "aws_lambda_function" "lambda_weather_api_current" {
   function_name = "CurrentWeather"
@@ -73,13 +94,15 @@ resource "aws_lambda_function" "lambda_weather_api_current" {
   environment {
     variables = {
       OPENWEATHER_APIKEY = var.openweathermap_apikey
+      DYNAMODB_ENABLED   = 1
+      DYNAMODB_TABLE     = random_pet.dynamodo_table_name.id
     }
   }
 
   runtime = "nodejs20.x"
   handler = "main.current"
 
-  timeout = 10 // API calls can take a few seconds
+  timeout     = 10  // API calls can take a few seconds
   memory_size = 192 // A small buffer to stop OOM errors
 
   source_code_hash = data.archive_file.lambda_weather_api.output_base64sha256
@@ -96,13 +119,15 @@ resource "aws_lambda_function" "lambda_weather_api_historical" {
   environment {
     variables = {
       OPENWEATHER_APIKEY = var.openweathermap_apikey
+      DYNAMODB_ENABLED   = 1
+      DYNAMODB_TABLE     = random_pet.dynamodo_table_name.id
     }
   }
 
   runtime = "nodejs20.x"
   handler = "main.historical"
 
-  timeout = 10 // API calls can take a few seconds
+  timeout     = 10  // API calls can take a few seconds
   memory_size = 192 // A small buffer to stop OOM errors
 
   source_code_hash = data.archive_file.lambda_weather_api.output_base64sha256
@@ -129,6 +154,22 @@ resource "aws_iam_role" "lambda_exec" {
 resource "aws_iam_role_policy_attachment" "lambda_policy" {
   role       = aws_iam_role.lambda_exec.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+// Give lambda access to the one table
+resource "aws_iam_role_policy" "dynamodb_lambda_policy" {
+  name = "dynamodb_lambda_policy"
+  role = aws_iam_role.lambda_exec.id
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Action" : ["dynamodb:*"],
+        "Resource" : "${aws_dynamodb_table.api_request_table.arn}"
+      }
+    ]
+  })
 }
 
 // Expose the Lambda functions through an API Gateway
