@@ -36,6 +36,7 @@ export class WeatherHandlerProvider implements HandlerProvider {
       const weather = await this.weatherService.current(location);
       return {
         statusCode: HttpStatus.OK,
+        headers: { 'content-type': 'application/json' },
         body: JSON.stringify(weather),
       };
     } catch (e: unknown) {
@@ -70,6 +71,7 @@ export class WeatherHandlerProvider implements HandlerProvider {
       const weather = await this.weatherService.historical(location);
       return {
         statusCode: HttpStatus.OK,
+        headers: { 'content-type': 'application/json' },
         body: JSON.stringify(weather),
       };
     } catch (e: unknown) {
